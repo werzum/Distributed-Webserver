@@ -1,0 +1,769 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='es'>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+<title>Tremendo Foro de Mensajes</title>
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/ui-lightness/jquery-ui.css">
+
+<style rel='stylesheet' type='text/css'>
+
+* {
+    margin :0;
+    padding :0;
+}
+
+/* Header and footer styles */
+
+.cls-title {
+    font-size: 36px;    
+    font-weight: bold;
+}
+
+div#header, div#footer {
+    position: absolute;
+    right: 10px;
+    left: 10px;    
+    margin: 0px;
+    padding: 10px;
+    height: 50px;
+    border: 3px solid #999;
+    background-color: #DBAE1A;
+}
+
+div#footer {
+    bottom: 10px;
+    font-size: 16px;
+    height:80px;
+}
+
+div#header {    
+    top: 10px;
+    height: 50px;
+}
+
+/* Header content */
+
+div#header-left {
+    display:inline-block;
+    left:10px; 
+    width:290px; 
+    float:right;
+}
+
+table#tbl-user {
+    display:inline-table; 
+    visibility:visible;
+} 
+
+div#div-current-user {
+    top:10px;
+    position:absolute;
+    visibility: hidden;
+}
+
+span#txt-user {
+    font-weight:bold; 
+    color:white;
+}
+
+div#div-login-error {
+    background:red; 
+    font-size:15px; 
+    height:35px; 
+    position:relative; 
+    z-index:1; 
+    border: 2px solid #000; 
+    color:white; 
+    visibility: hidden;
+}
+
+p#txt-login-error {
+    padding: 10px 0 0 5px;
+}
+
+/* Footer content : form style and generic buttons */
+
+form#frm-message textarea { 
+    border: 2px solid #000;
+    width:calc(100% - 93px); 
+    padding: 10px; 
+    height:30px; 
+    resize:none;
+    font-size: 14px;
+}
+
+button.cls-btn { 
+    cursor: pointer;
+    border-radius: 5px;
+    font-size:11px;
+    color: #222;
+    font-weight: normal;
+    border: 2px solid #000;
+    float:right; 
+    background: #E5FA00;
+    padding: 0; 
+    width: 60px; 
+    height:26px; 
+    margin:2px 0px 0px 0px;
+    display:inline;
+}
+
+button#btn-message {  
+    height:50px;
+    padding: 10px; 
+    margin:0;
+} 
+
+button#btn-login {  
+    height:50px;
+    padding: 10px; 
+    margin:0;
+} 
+
+
+/* Three columns layout */
+
+div#left, div#right, div#center {
+    position: absolute;
+    top: 86px;
+    bottom: 92px;
+    margin-bottom: 10px;
+    padding: 0px 15px 15px 15px;
+}
+
+div#left, div#right {
+    width: 180px;
+    background-color: #EEE;
+    border-right: 3px solid #999;
+    border-left: 3px solid #999;
+}
+
+div#left {
+    left: 10px;
+}
+
+div#right {
+    right: 10px;
+}
+
+div#center {
+    right: 225px;
+    left: 225px;
+}
+
+/* Column content */
+
+.cls-column-title {
+    font-size: 26px;    
+    font-weight: bold;
+}
+
+.cls-column-header {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: #DBAE1A;
+    padding-left: 10px;    
+}
+
+.cls-column-content {
+    padding-left:0px;
+    height: calc( 100% - 80px ) ;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Lists inside columns */
+
+.cls-li-mouseover {
+    color:red;
+    cursor: pointer;
+}
+
+.cls-li-current {
+    background-color: #DBAE1A;
+}
+
+.cls-li-msg-header {
+    font-size:12px;    
+}
+
+.cls-li-msg-content {
+}
+
+hr.msg-separator {
+    margin-bottom:3px;
+}
+
+#ml, #ul, #sl {
+    list-style-type:none;
+}
+
+#ml li, #ul li, #sl li {
+    padding: 0px 10px 5px 10px; 
+}
+
+#ul li, #sl li {
+}
+
+li:nth-child(odd) { 
+    background: #eee; 
+}
+
+li:nth-child(even) { 
+    background: #fff; 
+}
+
+/* Popup dialog styles and jQuery ccs specific restyling for Popup dialogs */
+
+.ui-dialog {font-size: 75%;}
+
+div.cls-popup fieldset { 
+    padding:10px; 
+    border:0; 
+    margin-top:10px; 
+}
+
+div.cls-pupop label, div.clspopup input { 
+    display:block; 
+}
+
+div.cls-popup input.text { 
+    margin-bottom:10px; 
+    width:95%; 
+    padding: .4em; 
+}
+
+div#div-err-popup {
+    visibility: hidden;
+    color:red;
+}
+
+</style>
+
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+//------------------------------------------------------------------------
+//
+// Basic data types
+//
+//------------------------------------------------------------------------
+
+// Messages are objects with some specific fields
+// the message itself, who sends, destination, whether is private message, timestamp 
+function Message (msg, from, to, isPrivate, ts) {
+    this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts;
+}
+
+
+// Message area holds both private messages and subject messages
+function MessageArea (id, str, isPrivate) {
+    this.id = id; this.str = str; this.isPrivate=isPrivate;
+}
+
+
+//------------------------------------------------------------------------
+//
+// Global variables 
+//
+//------------------------------------------------------------------------
+
+// SocketIO to talk with server. 
+var socket = io();
+
+// Popup dialogs
+var dlg_new_subject;
+var dlg_new_user;
+
+// Forum state
+var userName = null;     // current user name when login succeeds
+var messageArea = null;  // current message list we display
+
+
+//------------------------------------------------------------------------
+//
+// Incomming asynchronous messages from server
+//
+//------------------------------------------------------------------------
+
+// On message (private or public) from server, append it to message area.
+socket.on('message', function(msgStr){
+    var msg = JSON.parse (msgStr);
+    msg.ts = new Date (msg.ts);
+    if (messageArea.isPrivate == msg.isPrivate && messageArea.id == msg.to) {
+        dom_push_message (msg);
+    } else {
+        console.log ("Notice: message lost due to asynchrony: " + msgStr);
+    }
+});
+
+// On new subject event: error while creating, ack, or add subject from the server
+socket.on ('new subject', function (what, data, sbj) {
+    switch (what) {
+        case 'err':
+            ui_setPopupError (data);
+            console.log("Error: " + data); // data is error message
+            break;
+        case 'ack':
+            dlg_new_subject.dialog("close");
+            break;
+        case 'add':
+            console.log("adding id:" + data + ",sbj:" + sbj);
+            dom_push_subject (data, sbj); // data is id
+            break;  
+    }
+    ui_setEnabledPopup (true);
+    // enable dialog as it was previously disabled.
+
+});
+
+// When receiving the subject list, display it and ask for first subject message list
+socket.on ('subject list', function (data) {
+    var slist = JSON.parse(data);
+    for (var i in slist) {
+        dom_push_subject (i, slist[i]);
+    }
+    for (var i in slist) {
+        messageArea = new MessageArea (i, slist[i], false); // public message area
+        do_askMessageList ();
+        break; // just first
+    }
+});
+
+// When receiving list of users, display it
+socket.on ('user list', function (data) {
+    var ulist = JSON.parse(data);
+    for (var i in ulist) {
+        dom_push_user (ulist[i]);
+    }
+});
+
+// On login reply from server, if error show it, if success update UI
+socket.on ('login', function (what, msg) {
+    switch (what) {
+        case 'err':
+            ui_setLoginError (msg);
+            break;
+        case 'ack':
+            userName = msg;
+            ui_toggleUserConnected ();
+            break;
+    }
+});
+
+
+socket.on ('message list', function (from, to, isPrivate, data) {
+    var ml = JSON.parse (data);
+    //console.log ("Event: message list:" + data);
+    if (!isPrivate) {
+        if (to == messageArea.id) {
+            for (var i in ml) {
+                ml[i].ts = new Date (ml[i].ts);
+                dom_push_message (ml[i]);
+            }
+        }
+    }
+});
+
+//-----------------------------------------------------------------
+//
+// Functions to update DOM with incomming data
+//
+//-----------------------------------------------------------------
+
+// Add subject to list
+function dom_push_subject (i, s) {
+    var li = $('#sl').append($('<li>').text(s));
+    $('#sl li').last().data ('idx', i);
+}
+
+// Add user to list
+function dom_push_user (u) {
+    $('#ul').append($('<li>').text(u));
+}
+
+// Add message to list
+function dom_push_message (msg) {
+    var htmlCode= "<div class='cls-li-msg-header'>" +
+                            "<span>Autor: " +
+                                "<span id='txt-who'>" + msg.from + "</span>" +
+                            "</span>" +
+                            "<span style='float:right;''>" +
+                                "<span id='txt-when'>" + msg.ts.toLocaleString() + 
+                                "</span>" +
+                            "</span>" + 
+                        "</div>" +
+                        "<hr class='msg-separator'>" +
+                        "<div class='cls-li-msg-content'>" + msg.msg +
+                        "</div>";
+
+    $('#ml').append($('<li>').html(htmlCode));
+}
+
+
+//-----------------------------------------------------------------
+//
+// Functions to update DOM to reflect some UI state
+//
+//-----------------------------------------------------------------
+
+// shows/hides login error mini-popup
+function ui_setLoginError (err) {
+    if (err == null) {
+        $( '#div-login-error' ).css('visibility', 'hidden');
+        $ ('#tbl-user :input').removeClass('ui-state-error');
+    } else {
+        $( '#div-login-error' ).css('visibility', 'visible');
+        $( '#txt-login-error' ).text(err);
+    }
+}
+
+// enable/disable popup fields while we wait for server reply
+function ui_setEnabledPopup (enabled) {
+    if (enabled) {
+        $('.ui-dialog').find('input, button').attr('disabled',false).removeClass('ui-state-disabled');
+    } else {
+        $('.ui-dialog').find('input, button').attr('disabled','disabled').addClass('ui-state-disabled');
+    }
+}
+
+// When user enters invalid data on popup, show the error inside popup
+function ui_setPopupError (err) {
+    if (err != null) {
+        $( '#div-err-popup' ).text (err);
+        $( '#div-err-popup' ).css('visibility', 'visible');
+    } else {
+        $( '#div-err-popup' ).css('visibility', 'hidden');
+    }
+}
+
+// Updates UI when user connects/disconnects
+// hides/shows and enables/disables some specific UI parts
+function ui_toggleUserConnected () {
+    if (userName == null) {  // disable most parts
+        $( '#tbl-user').css('visibility', 'visible');
+        $( '#div-current-user').css('visibility', 'hidden');
+        $( '#btn-login').text("Entrar");
+        $( '#btn-login').css('background-color' , '#E5FA00');
+        $( '#footer').find('button, textarea').attr('disabled','disabled').addClass('ui-state-disabled');
+        $( '#btn-user').attr('disabled','disabled').addClass('ui-state-disabled');
+        $( '#btn-subject').attr('disabled','disabled').addClass('ui-state-disabled');
+
+    } else { // enable everything
+        $( '#tbl-user').css('visibility', 'hidden');
+        $( '#div-current-user').css('visibility', 'visible');
+        $( '#btn-login').css('background-color' , 'green');
+        $( '#btn-login').text("Salir");
+        $( '#txt-user').text(userName);
+        $( '#footer').find('button, textarea').attr('disabled',false).removeClass('ui-state-disabled');
+        $( '#btn-subject').attr('disabled',false).removeClass('ui-state-disabled');
+        $( '#btn-user').attr('disabled','disabled').addClass('ui-state-disabled');
+    }
+}
+
+
+
+//
+// utility
+//
+function checkLength( o, n, min, max ) {
+    if ( o.val().length > max || o.val().length < min ) {
+        //o.addClass( "ui-state-error" );
+        return "La longitud de " + n + " debe estar entre " + min + " y " + max + ".";
+    } else {
+        return null;
+    }
+}
+
+//-----------------------------------------------------------------
+//
+// Do_xxx functions: executed on user triggered events, when we need
+// to reach the server
+//
+//-----------------------------------------------------------------
+
+// User wants to add a subject, if valid, send it to server
+function do_addSubject () {
+    var subject = $( "#txt-subject" );
+    var err = checkLength(subject , "Tema", 3, 40 );
+    if (err == null) {
+        ui_setEnabledPopup (false);    // don't allow duplicates from ui
+        socket.emit ('new subject', subject.val());
+        return true; // valid
+    } else {
+        ui_setPopupError (err);
+        return false; //invalid
+    }
+}
+
+// User press "send" button to post a message
+function do_sendMessage () {
+    var msgStr = $('#msg').val().trim(); 
+    if (msgStr != '') {
+        var usr = (userName==null) ? '' : userName
+        var msg = new Message (msgStr, usr, messageArea.id, messageArea.isPrivate, '');
+        socket.emit('message', JSON.stringify(msg));
+    }
+    $('#msg').val('');
+}
+
+
+// User wants to login
+function do_login () {
+    var uname = $( '#txt-username' );
+    var upass = $( '#txt-password' );
+    var err = checkLength(uname , "usuario", 3, 12 );
+    if (err == null) err = checkLength(upass , "contraseña", 3, 12 );
+    if (err == null) {
+        // login completes when we will receive a 'login' asynchronous event. 
+        socket.emit('login', uname.val(), upass.val());
+    } else {
+        ui_setLoginError ('Credenciales incorrectas');
+    }
+}
+
+// TODO: Logout would probably need to reach server to end session
+function do_logout () {
+    userName = null;
+    ui_toggleUserConnected();
+}
+
+function do_askMessageList () {
+    var usr = (userName==null) ? '' : userName;
+    $('#ml').html('');
+    socket.emit ('get message list', usr, messageArea.id, 
+            messageArea.isPrivate);
+}
+
+//-------------------------------------------------------------------------------
+//
+// DOM work to do when DOM is ready
+// - Create popup dialogs
+// - register events on DOM elemenets
+// - ask data to the server that will fill up UI
+//
+//-------------------------------------------------------------------------------
+$(function() {
+
+    // Create simple popup to create one subject
+    dlg_new_subject = $( "#dialog-new-subject" ).dialog({
+        autoOpen: false,
+        height: 200,
+        width: 350,
+        modal: true,
+        buttons: {
+            "Crear": do_addSubject,
+            "Cancelar": function() {
+                dlg_new_subject.dialog( "close" );
+            }
+        },
+        close: function() {
+            $('#frm-subject').trigger("reset");    
+        }   
+    });
+
+    // On user login, send credentials to server
+    $('#frm-login').submit(function(event){
+        event.preventDefault();      // Do not send GET
+        if (userName == null) do_login ();
+        else do_logout ();
+        return false;
+    });
+
+
+    // On user message submission, send message to server
+    $('#frm-message').submit(function(event){
+        event.preventDefault();      // Do not send GET
+        do_sendMessage ();
+        return false;
+    });
+
+    $( "#btn-subject" ).button().on( "click", function() {
+        dlg_new_subject.dialog( "open" );
+    });
+
+    $('#frm-subject').submit(function(event){
+        event.preventDefault();      // Do not send GET
+        do_addSubject();
+        return false;
+    });
+
+    // Subject list effects
+    $("#sl").on("click", "li", function() {
+        var sindex = $(this).index();
+        var sid = $(this).data('idx');
+        if (messageArea != null) {
+            if (!messageArea.isPrivate && messageArea.id == sid) return;
+        }
+        messageArea = new MessageArea (sid, $(this).text(), false);
+        do_askMessageList ();
+    });
+
+    $("#sl").on("mouseenter", "li", function() {
+        $(this).addClass('cls-li-mouseover');
+    });
+
+
+    $("#sl").on("mouseleave", "li", function() {
+        $(this).removeClass('cls-li-mouseover');
+    });
+
+    // User list effects
+    $("#ul").on("click", "li", function() {
+        if (userName == null) return;
+        var uindex = $(this).index();
+        console.log("Click on user index: " + uindex);
+    });
+
+    $("#ul").on("mouseenter", "li", function() {
+        if (userName ==null) return;
+        $(this).addClass('cls-li-mouseover');
+    });
+
+    $("#ul").on("mouseleave", "li", function() {
+        if (userName == null) return;
+        $(this).removeClass('cls-li-mouseover');
+    });
+
+    // When user/password fields receive focus, remove hide login error mini-popup
+    $( '#tbl-user :input' ).focus (function () {
+        ui_setLoginError(null);
+    });
+
+    // update UI to reflect wheter user is initially connected
+    ui_toggleUserConnected (); 
+
+    // Ask for dynamic data
+    // we need dom to be ready and all dom listerners installed
+    socket.emit ('get subject list');
+    socket.emit ('get user list');
+
+    // TODO: some session handling stuff could go here
+
+});
+
+</script>        
+
+
+</head>
+<body>
+    <div id='all'>
+
+        <div id='header'>
+            <span class='cls-title'>Tremendo Foro de Mensajes!!</span>
+            <div id='header-left'>
+
+                <form id="frm-login" action=""> 
+                <table border="0" id='tbl-user'>
+                <tr> 
+                    <td>Usuario: </td> 
+                    <td><input type="text" id="txt-username"></td> 
+                </tr> 
+                <tr> 
+                    <td>Contraseña: </td> 
+                    <td><input type="password" id="txt-password"></td> 
+                </tr> 
+                </table> 
+                <button class="cls-btn" id="btn-login" value="login">Entrar</button> 
+                </form>
+
+                <div id='div-current-user'>
+                    <p>Usuario: <span id='txt-user'>Foreador</span></p>
+                </div>
+
+                <div id='div-login-error'>
+                    <p id='txt-login-error'>Error</p>
+                </div>
+            </div>
+        </div>
+
+        <div id='left'>
+            <div class='cls-column-header'>
+                <span class='cls-column-title'>Usuarios</span>
+                <button class="cls-btn" id="btn-user" name="btn-user">Nuevo</button> 
+                </form>
+            </div>
+            <div class='cls-column-content'>
+                <ul id='ul'>
+<!--
+                    <li>Juan</li>
+                    <li>Antonio</li>   
+--> 
+                </ul>
+            </div>
+        </div>
+
+        <div id='right'>
+            <div class='cls-column-header'>
+                <span class='cls-column-title'>Temas</span>
+                <button class="cls-btn" name="btn-subject" id="btn-subject">Nuevo</button> 
+            </div>
+            <div class='cls-column-content'>
+                <ul id='sl'>
+<!-- Subject list is retrieved on runtime. Uncomment on UI desing                    
+                    <li>Tema primero</li>
+                    <li>Tema segundo</li>
+-->
+                </ul>
+            </div>
+        </div>
+
+        <div id='center'>
+            <div class='cls-column-header'>
+                <span class='cls-column-title'>Mensajes</span>
+            </div>
+            <div class='cls-column-content'>
+                <ul id='ml'>
+                    <li>
+                        <div class='cls-li-msg-header'>
+                            <span>Autor:
+                                <span id="txt-who">Foreador</span>
+                            </span>
+                            <span style="float:right;">Cuando:
+                                <span id='txt-when'>ts</span>
+                            </span> 
+                        </div>
+                        <hr class='msg-separator'>
+                        <div class='cls-li-msg-content'>
+                        Con diez cañones por banda, viento en popa a toda vela, no corta el mar, sino vuela, un velero bergantín.
+                        </div>
+                    </li>
+                    <li>
+                        En un lugar de la mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo, de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div id='footer'>
+            Mensaje a Enviar:
+            <form id="frm-message" name="frm-message" action="">
+                <textarea id="msg" autocomplete="off" cols="40" rows="2"></textarea>
+                <button class="cls-btn" id="btn-message">Enviar</button>
+            </form>
+        </div>
+
+    </div>    
+
+
+    <div class="cls-popup" id="dialog-new-subject" title="Crear un tema nuevo">
+
+        <form name="frm-subject" id="frm-subject" action="">
+            <fieldset>
+                <label for="txt-subject">Tema a crear:</label>
+                <input type="text" name="txt-subject" id="txt-subject" value="" class="text ui-widget-content ui-corner-all">
+
+                <!-- Allow form submission with keyboard without duplicating the dialog button -->
+                <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+            </fieldset>
+        </form>
+        <div id='div-err-popup'>Error</div>
+    </div>
+
+</body>
+</html>
