@@ -1,15 +1,8 @@
 var net = require('net');
-/*var PORT;
-var HOST;
-module.exports = {
-    setPort : function(port, host) {
-        PORT = port;
-				HOST = host;
-    }
-}*/
+
 //let dmclient = require("./dmclient.js")
-let dm_server = require("./dmserver.js")
-console.log(dm_server)
+//let dm_server = require("./dmserver.js")
+
 var client = new net.Socket();
 
 exports.Start = function (host, port, cb) {

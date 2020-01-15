@@ -1,12 +1,22 @@
 var net = require('net');
 var dm = require ('./dm.js');
+
+
+  /*if listening to dmclient activate the following:
 var dmclient = require("./dmclient.js")
+let HOST = dmclient.HOST;
+let PORT = dmclient.PORT;
+*/
+//while listening to forum:
+var forum = require('./forum.js');
+forum.dmserverport;
+forum.dmserverhost;
 
 // Create the server socket, on client connections, bind event handlers
 server = net.createServer(function(sock) {
 
     // We have a connection - a socket object is assigned to the connection automatically
-    console.log('Conected: ' + sock.remoteAddress + ':' + sock.remotePort);
+    console.log('Conected to client: ' + sock.remoteAddress + ':' + sock.remotePort);
 
     // Add a 'data' event handler to this instance of socket
     sock.on('data', function(data) {
@@ -57,6 +67,13 @@ server = net.createServer(function(sock) {
 
 });
 
-server.listen(dmclient.PORT, dmclient.HOST, function () {
-    console.log('Server listening on ' + dmclient.HOST +':'+ dmclient.PORT);
+/*
+server.listen(PORT, HOST, function () {
+    console.log('Server listening on ' + HOST +':'+ PORT);
+});
+*/
+//for control via forum:
+
+server.listen(forum.dmserverport, forum.dmserverhost, function () {
+    console.log('Server listening on ' + forum.dmserverport +':'+ forum.dmserverhost);
 });
