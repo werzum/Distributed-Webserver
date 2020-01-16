@@ -1,19 +1,12 @@
-var net = require('net');
-
-//let dmclient = require("./dmclient.js")
-//let dm_server = require("./dmserver.js")
-
-var client = new net.Socket();
+var zmq = require("zeromq");
+var requester = zmq.socket("req")
+let dm_server = require("./dmserver.js")
 
 exports.Start = function (host, port, cb) {
 
 	console.log("start server at", host, port)
-	client.connect(port, host, function() {
-    	console.log('Connected to: ' + host + ':' + port);
-    	if (cb != null) cb();
-	});
+	requester.connect('tcp://localhost:5555');
 }
-
 
 var callbacks = {} // hash of callbacks. Key is invoId
 var invoCounter = 0; // current invocation number is key to access "callbacks".
@@ -23,9 +16,17 @@ var invoCounter = 0; // current invocation number is key to access "callbacks".
 // extract the reply, find the callback, and call it.
 // Its useful to study "exports" functions before studying this one.
 //
-client.on ('data', function (data) {
+requester.on ('message', function (data) {
 	console.log ('data comes in: ' + data);
-	var reply = JSON.parse (data.toString());
+
+	//splitting the received JSON data into single commands
+	var str = data.toString();
+	var strRounds = str.replace("}{","}*{").split("*");
+	strRounds.forEach((part, i) => {
+
+		console.log(part)
+		var reply = JSON.parse (part);
+		console.log("single reply:", reply)
 	switch (reply.what) {
 		// TODO complete list of commands
 		case 'get private message list':
@@ -79,9 +80,10 @@ client.on ('data', function (data) {
 			console.log ("Panic: we got this: " + reply.what);
 	}
 });
+});
 
 // Add a 'close' event handler for the client socket
-client.on('close', function() {
+requester.on('close', function() {
     console.log('Connection closed');
 });
 
@@ -104,52 +106,56 @@ function Invo (str, cb) {
 exports.getPublicMessageList = function  (sbj, cb) {
 	var invo = new Invo ('get public message list', cb);
 	invo.sbj = sbj;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.getPrivateMessageList = function (u1, u2, cb) {
 	invo = new Invo ('get private message list', cb);
 	invo.u1 = u1;
 	invo.u2 = u2;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.getSubjectList = function (cb) {
-	client.write (JSON.stringify(new Invo ('get subject list', cb)));
+	console.log("received req for subject list")
+	//console.log(JSON.stringify(new Invo ('get subject list', cb)));
+	requester.send (JSON.stringify(new Invo ('get subject list', cb)));
 }
 
 exports.getUserList = function (cb) {
-	client.write (JSON.stringify(new Invo ('get user list', cb)));
+	console.log("received req for user list")
+	//console.log(invo)
+	requester.send (JSON.stringify(new Invo ('get user list', cb)));
 }
 
 exports.addPublicMessage = function  (msg, cb) {
 	var invo = new Invo ('add public message', cb);
 	invo.msg = msg;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.addPrivateMessage = function  (msg, cb) {
 	var invo = new Invo ('add private message', cb);
 	invo.msg = msg;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.addSubject = function  (sbj, cb) {
 	var invo = new Invo ('add subject', cb);
 	invo.sbj = sbj;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.addUser = function  (u, p, cb) {
 	var invo = new Invo ('add user', cb);
 	invo.u = u;
 	invo.p = p;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }
 
 exports.login = function  (u, p, cb) {
 	var invo = new Invo ('login', cb);
 	invo.u = u;
 	invo.p = p;
-	client.write (JSON.stringify(invo));
+	requester.send (JSON.stringify(invo));
 }

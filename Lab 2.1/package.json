@@ -4,6 +4,7 @@
   "description": "SAD lab forum practice",
   "dependencies": {
     "express": "4.8.0",
-    "socket.io": "1.0.2"
+    "socket.io": "1.0.2",
+    "zeromq": "^5.2.0"
   }
 }
