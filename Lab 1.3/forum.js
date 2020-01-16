@@ -7,7 +7,6 @@ var dm = require ('./dm_remote.js');
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-//the forum always closes on TCPc
 exports.dmserverhost = "127.0.0.1";
 exports.dmserverport = 9000;
 dm.Start(this.dmserverhost, this.dmserverport);

@@ -1,7 +1,7 @@
 var net = require('net');
 
 //let dmclient = require("./dmclient.js")
-//let dm_server = require("./dmserver.js")
+let dm_server = require("./dmserver.js")
 
 var client = new net.Socket();
 
