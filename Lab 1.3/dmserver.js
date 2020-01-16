@@ -8,8 +8,6 @@ let PORT = dmclient.PORT;
 */
 //while listening to forum:
 var forum = require('./forum.js');
-forum.dmserverport;
-forum.dmserverhost;
 
 // Create the server socket, on client connections, bind event handlers
 server = net.createServer(function(sock) {
@@ -73,16 +71,22 @@ server.on("connection", function (sock){
 
 
 
+//server.listen(9000);
 
 
-/*
-server.listen(PORT, HOST, function () {
-    console.log('Server listening on ' + HOST +':'+ PORT);
+server.listen(9000, function () {
+var address = server.address();
+var port = address.port;
+var family = address.family;
+var ipaddr = address.address;
+console.log('Server is listening at port' + port);
+console.log('Server ip :' + ipaddr);
+console.log('Server is IP4/IP6 : ' + family);
 });
-*/
+
 //for control via forum:
 
-server.listen(9000);
+
 /*server.listen(function () {
   var address = server.address();
   var port = address.port;
