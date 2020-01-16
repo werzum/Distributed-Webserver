@@ -25,7 +25,15 @@ var invoCounter = 0; // current invocation number is key to access "callbacks".
 //
 client.on ('data', function (data) {
 	console.log ('data comes in: ' + data);
-	var reply = JSON.parse (data.toString());
+
+	//splitting the received JSON data into single commands
+	var str = data.toString();
+	var strRounds = str.replace("}{","}*{").split("*");
+	strRounds.forEach((part, i) => {
+
+		console.log(part)
+		var reply = JSON.parse (part);
+		console.log("single reply:", reply)
 	switch (reply.what) {
 		// TODO complete list of commands
 		case 'get private message list':
@@ -79,6 +87,7 @@ client.on ('data', function (data) {
 			console.log ("Panic: we got this: " + reply.what);
 	}
 });
+});
 
 // Add a 'close' event handler for the client socket
 client.on('close', function() {
@@ -115,10 +124,14 @@ exports.getPrivateMessageList = function (u1, u2, cb) {
 }
 
 exports.getSubjectList = function (cb) {
+	console.log("received req for subject list")
+	//console.log(JSON.stringify(new Invo ('get subject list', cb)));
 	client.write (JSON.stringify(new Invo ('get subject list', cb)));
 }
 
 exports.getUserList = function (cb) {
+	console.log("received req for user list")
+	//console.log(invo)
 	client.write (JSON.stringify(new Invo ('get user list', cb)));
 }
 
