@@ -2,15 +2,18 @@
 var zmq = require("zeromq");
 var responder = zmq.socket("rep")
 var dm = require ('./dm.js');
+var port = "tcp://127.0.0.1:5555"
+var publishport = "tcp://127.0.0.1:5557"
 
 console.log("dmserver alive")
-responder.bind("tcp://*:5555", function(err){
+responder.bind(port, function(err){
   if (err){console.log(err)}else{
-    console.log("DMserver listening on 9000")
+    console.log("DMserver listening on ", port)
   }}
 
 )
 
+//regular message propagation
 responder.on('message', function(data) {
 
     console.log('request comes in...' + data);
@@ -41,6 +44,7 @@ responder.on('message', function(data) {
           break;
         case 'add public message':
           reply.obj = dm.addPublicMessage (invo.msg);
+          publisher.send(["forum message", JSON.stringify(invo)]);
           break;
         case 'add subject':
           reply.obj = dm.addSubject (invo.sbj);
@@ -61,3 +65,15 @@ responder.on('message', function(data) {
     });
   }
 )
+
+//for the pub/sub of public messages:
+
+
+var publisher = zmq.socket("pub");
+publisher.bindSync(publishport);
+console.log("Publisher bound to ",publishport);
+
+/*setInterval(function() {
+  console.log("sending a multipart message envelope");
+  publisher.send(["kitty cats", "meow!"]);
+}, 500);*/

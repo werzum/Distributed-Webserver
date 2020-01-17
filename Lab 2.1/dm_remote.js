@@ -2,10 +2,10 @@ var zmq = require("zeromq");
 var requester = zmq.socket("req")
 let dm_server = require("./dmserver.js")
 
-exports.Start = function (host, port, cb) {
+exports.Start = function (port, cb) {
 
-	console.log("start server at", host, port)
-	requester.connect('tcp://localhost:5555');
+	console.log("start server at", port)
+	requester.connect(port);
 }
 
 var callbacks = {} // hash of callbacks. Key is invoId
@@ -24,61 +24,60 @@ requester.on ('message', function (data) {
 	var strRounds = str.replace("}{","}*{").split("*");
 	strRounds.forEach((part, i) => {
 
-		console.log(part)
 		var reply = JSON.parse (part);
-		console.log("single reply:", reply)
-	switch (reply.what) {
-		// TODO complete list of commands
-		case 'get private message list':
-			console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, two arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'get public message list':
-			console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'get subject list':
-			//console.log("data extract:")
-			console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
-			//originally callbacks [reply.invoId] (reply.obj);
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'get user list':
-			console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'login':
-			console.log ('We received a reply for login');
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'add private message':
-			console.log ('We received a reply for adding private message');
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'add public message':
-			console.log ('We received a request to add public message');
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'add user':
-			console.log ('We received a request to add user');
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		case 'add subject':
-			console.log ('We received a request to add subject');
-			callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
-			delete callbacks [reply.invoId]; // remove from hash
-			break;
-		default:
-			console.log ("Panic: we got this: " + reply.what);
-	}
+
+		switch (reply.what) {
+			// TODO complete list of commands
+			case 'get private message list':
+				console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, two arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'get public message list':
+				console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'get subject list':
+				//console.log("data extract:")
+				console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
+				//originally callbacks [reply.invoId] (reply.obj);
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'get user list':
+				console.log ('We received a reply for: ' + reply.what + ':' + reply.invoId);
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, one argument
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'login':
+				console.log ('We received a reply for login');
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'add private message':
+				console.log ('We received a reply for adding private message');
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'add public message':
+				console.log ('We received a request to add public message');
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'add user':
+				console.log ('We received a request to add user');
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			case 'add subject':
+				console.log ('We received a request to add subject');
+				callbacks [reply.invoId] (reply.obj); // call the stored callback, no arguments
+				delete callbacks [reply.invoId]; // remove from hash
+				break;
+			default:
+				console.log ("Panic: we got this: " + reply.what);
+		}
 });
 });
 

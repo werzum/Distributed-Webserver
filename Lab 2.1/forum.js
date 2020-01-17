@@ -7,9 +7,8 @@ var dm = require ('./dm_remote.js');
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-exports.dmserverhost = "127.0.0.1";
-exports.dmserverport = "tcp://*:5555";
-dm.Start(this.dmserverhost, this.dmserverport);
+exports.dmserverport = 'tcp://127.0.0.1:5555';
+dm.Start(this.dmserverport);
 
 process.on('uncaughtException', function (err) {
     console.log(err);
@@ -40,6 +39,26 @@ app.get('/:page', function(req, res){
 });
 
 
+// subber.js
+var zmq = require("zeromq");
+subscriber = zmq.socket("sub");
+let dmsubscribeport = 'tcp://127.0.0.1:5557';
+
+subscriber.connect(dmsubscribeport);
+subscriber.subscribe("forum message");
+console.log("Subscriber connected to port", dmsubscribeport);
+
+subscriber.on("message", function(topic, message) {
+
+  //letting the message buffer, converting it to the
+  //right format, adding timestamp and finally sending it
+  message = message.toString();
+  message = JSON.parse(message)
+  message = message.msg;
+  message.ts = new Date();
+  io.emit('message', JSON.stringify(message));
+});
+
 
 io.on('connection', function(sock) {
 
@@ -48,9 +67,6 @@ io.on('connection', function(sock) {
 		console.log('Event: client disconnected');
 	});
 
-  	// on messages that come from client, store them, and send them to every
-  	// connected client
-  	// TODO: We better optimize message delivery using rooms.
   	sock.on('message', function(msgStr){
   		console.log("Event: message: " + msgStr);
   		var msg = JSON.parse (msgStr);
@@ -61,7 +77,8 @@ io.on('connection', function(sock) {
 			});
 		} else {
 			dm.addPublicMessage (msg, function () {
-				io.emit('message', JSON.stringify(msg));
+
+			     io.emit('message', JSON.stringify(msg));
 			});
 		}
 	});
