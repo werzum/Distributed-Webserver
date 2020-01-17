@@ -2,13 +2,14 @@ var commands = process.argv;
 
 //call dmclient like: node dmclient.js HOST PORT "function" "argument1" "argument2"
 console.log("connect to host:",commands[2],"at port:", commands[3])
-exports.HOST = commands[2];
-exports.PORT = commands[3];
-
+host = commands[2];
+port = "tcp://127.0.0.1:"+commands[3];
 var dm = require ('./dm_remote.js');
+console.log(port)
+dm.StartClient(port);
 
-dm.Start(this.HOST, this.PORT, function () {
-    //passing the command line arguments and check for the cases
+console.log(commands[4])
+
     switch (commands[4]) {
       case 'get subject list':
         dm.getSubjectList (function (ml) {
@@ -41,6 +42,9 @@ dm.Start(this.HOST, this.PORT, function () {
         });
         break;
       case 'add public message':
+        console.log("adding message")
+        //var msg = JSON.parse(commands[5])
+        //msg.ts = new Date()
         dm.addPublicMessage (commands[5], function (ml) {
           console.log ("here it is:")
           console.log (JSON.stringify(ml));
@@ -64,5 +68,4 @@ dm.Start(this.HOST, this.PORT, function () {
           console.log (JSON.stringify(ml));
         });
         break;
-}}
-);
+      }

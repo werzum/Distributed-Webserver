@@ -1,11 +1,9 @@
-//var net = require('net');
 var zmq = require("zeromq");
 var responder = zmq.socket("rep")
 var dm = require ('./dm.js');
 var port = "tcp://127.0.0.1:5555"
 var publishport = "tcp://127.0.0.1:5557"
 
-console.log("dmserver alive")
 responder.bind(port, function(err){
   if (err){console.log(err)}else{
     console.log("DMserver listening on ", port)
@@ -20,11 +18,7 @@ responder.on('message', function(data) {
     var str = data.toString();
     var strRounds = str.replace("}{","}*{").split("*");
     strRounds.forEach((part, i) => {
-
-      console.log(part)
       var invo = JSON.parse (part);
-      console.log('request is:' + invo.what + ':' + part);
-
       var reply = {what:invo.what, invoId:invo.invoId};
       switch (invo.what) {
         case 'get subject list':
@@ -67,13 +61,6 @@ responder.on('message', function(data) {
 )
 
 //for the pub/sub of public messages:
-
-
 var publisher = zmq.socket("pub");
 publisher.bindSync(publishport);
 console.log("Publisher bound to ",publishport);
-
-/*setInterval(function() {
-  console.log("sending a multipart message envelope");
-  publisher.send(["kitty cats", "meow!"]);
-}, 500);*/

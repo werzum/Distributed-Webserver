@@ -39,17 +39,15 @@ app.get('/:page', function(req, res){
 });
 
 
-// subber.js
+// Subscriber
 var zmq = require("zeromq");
 subscriber = zmq.socket("sub");
 let dmsubscribeport = 'tcp://127.0.0.1:5557';
-
 subscriber.connect(dmsubscribeport);
 subscriber.subscribe("forum message");
 console.log("Subscriber connected to port", dmsubscribeport);
 
 subscriber.on("message", function(topic, message) {
-
   //letting the message buffer, converting it to the
   //right format, adding timestamp and finally sending it
   message = message.toString();
@@ -77,7 +75,6 @@ io.on('connection', function(sock) {
 			});
 		} else {
 			dm.addPublicMessage (msg, function () {
-
 			     io.emit('message', JSON.stringify(msg));
 			});
 		}

@@ -1,10 +1,14 @@
 var zmq = require("zeromq");
 var requester = zmq.socket("req")
-let dm_server = require("./dmserver.js")
+
 
 exports.Start = function (port, cb) {
-
+	var dm_server = require("./dmserver.js")
 	console.log("start server at", port)
+	requester.connect(port);
+}
+
+exports.StartClient = function (port) {
 	requester.connect(port);
 }
 
@@ -25,7 +29,6 @@ requester.on ('message', function (data) {
 	strRounds.forEach((part, i) => {
 
 		var reply = JSON.parse (part);
-
 		switch (reply.what) {
 			// TODO complete list of commands
 			case 'get private message list':
@@ -117,19 +120,18 @@ exports.getPrivateMessageList = function (u1, u2, cb) {
 
 exports.getSubjectList = function (cb) {
 	console.log("received req for subject list")
-	//console.log(JSON.stringify(new Invo ('get subject list', cb)));
 	requester.send (JSON.stringify(new Invo ('get subject list', cb)));
 }
 
 exports.getUserList = function (cb) {
 	console.log("received req for user list")
-	//console.log(invo)
 	requester.send (JSON.stringify(new Invo ('get user list', cb)));
 }
 
 exports.addPublicMessage = function  (msg, cb) {
 	var invo = new Invo ('add public message', cb);
 	invo.msg = msg;
+	console.log(invo)
 	requester.send (JSON.stringify(invo));
 }
 
