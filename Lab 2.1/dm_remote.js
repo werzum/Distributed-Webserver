@@ -1,14 +1,8 @@
 var zmq = require("zeromq");
 var requester = zmq.socket("req")
 
-
-exports.Start = function (port, cb) {
-	var dm_server = require("./dmserver.js")
-	console.log("start server at", port)
-	requester.connect(port);
-}
-
-exports.StartClient = function (port) {
+exports.StartReq = function (port) {
+	console.log("COnnect to server at", port)
 	requester.connect(port);
 }
 
@@ -131,7 +125,7 @@ exports.getUserList = function (cb) {
 exports.addPublicMessage = function  (msg, cb) {
 	var invo = new Invo ('add public message', cb);
 	invo.msg = msg;
-	console.log(invo)
+	console.log("this invo:",invo)
 	requester.send (JSON.stringify(invo));
 }
 

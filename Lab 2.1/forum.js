@@ -3,12 +3,34 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var dm = require ('./dm_remote.js');
-
+var commands = process.argv;
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-exports.dmserverport = 'tcp://127.0.0.1:5555';
-dm.Start(this.dmserverport);
+let reqresport = "tcp://127.0.0.1:"+commands [2].toString();
+let pubssubport = "tcp://127.0.0.1:"+commands [3].toString();
+console.log("forum ports are", reqresport, "and puport",pubssubport)
+dm.StartReq(reqresport);
+
+// Subscriber
+var zmq = require("zeromq");
+subscriber = zmq.socket("sub");
+//let dmsubscribeport = "tcp://127.0.0.1:"+pubssubport+toString();
+subscriber.connect(pubssubport);
+subscriber.subscribe("forum message");
+console.log("Subscriber connected to port", pubssubport);
+
+subscriber.on("message", function(topic, message) {
+  //letting the message buffer, converting it to the
+  //right format, adding timestamp and finally sending it
+  console.log("forum received message:", message)
+  message = message.toString();
+  message = JSON.parse(message)
+  message = message.msg;
+  message.ts = new Date();
+  io.emit('message', JSON.stringify(message));
+});
+
 
 process.on('uncaughtException', function (err) {
     console.log(err);
@@ -39,24 +61,6 @@ app.get('/:page', function(req, res){
 });
 
 
-// Subscriber
-var zmq = require("zeromq");
-subscriber = zmq.socket("sub");
-let dmsubscribeport = 'tcp://127.0.0.1:5557';
-subscriber.connect(dmsubscribeport);
-subscriber.subscribe("forum message");
-console.log("Subscriber connected to port", dmsubscribeport);
-
-subscriber.on("message", function(topic, message) {
-  //letting the message buffer, converting it to the
-  //right format, adding timestamp and finally sending it
-  message = message.toString();
-  message = JSON.parse(message)
-  message = message.msg;
-  message.ts = new Date();
-  io.emit('message', JSON.stringify(message));
-});
-
 
 io.on('connection', function(sock) {
 
@@ -66,8 +70,8 @@ io.on('connection', function(sock) {
 	});
 
   	sock.on('message', function(msgStr){
-  		console.log("Event: message: " + msgStr);
-  		var msg = JSON.parse (msgStr);
+  	console.log("Event: message: " + msgStr);
+  	var msg = JSON.parse (msgStr);
 		msg.ts = new Date(); // timestamp
 		if (msg.isPrivate) {
 			dm.addPrivateMessage (msg, function () {

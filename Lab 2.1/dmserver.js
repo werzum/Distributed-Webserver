@@ -1,14 +1,17 @@
 var zmq = require("zeromq");
 var responder = zmq.socket("rep")
 var dm = require ('./dm.js');
-var port = "tcp://127.0.0.1:5555"
-var publishport = "tcp://127.0.0.1:5557"
+var commands = process.argv;
+var reqresport = "tcp://127.0.0.1:"+commands[2];
+var publishport = "tcp://127.0.0.1:"+commands[3];
 
-responder.bind(port, function(err){
+
+console.log("forum ports are", reqresport, "and puport",publishport)
+
+responder.bind(reqresport, function(err){
   if (err){console.log(err)}else{
-    console.log("DMserver listening on ", port)
+    console.log("DMserver listening on ", reqresport)
   }}
-
 )
 
 //regular message propagation
@@ -37,7 +40,9 @@ responder.on('message', function(data) {
           reply.obj = dm.addPrivateMessage (invo.msg);
           break;
         case 'add public message':
+
           reply.obj = dm.addPublicMessage (invo.msg);
+          console.log("reply:",reply, "invo", invo)
           publisher.send(["forum message", JSON.stringify(invo)]);
           break;
         case 'add subject':
