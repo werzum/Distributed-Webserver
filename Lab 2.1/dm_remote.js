@@ -125,7 +125,6 @@ exports.getUserList = function (cb) {
 exports.addPublicMessage = function  (msg, cb) {
 	var invo = new Invo ('add public message', cb);
 	invo.msg = msg;
-	console.log("this invo:",invo)
 	requester.send (JSON.stringify(invo));
 }
 

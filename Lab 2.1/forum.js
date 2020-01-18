@@ -7,15 +7,15 @@ var commands = process.argv;
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-let reqresport = "tcp://127.0.0.1:"+commands [2].toString();
-let pubssubport = "tcp://127.0.0.1:"+commands [3].toString();
+let reqresport = "tcp://127.0.0.1:"+commands[2].toString();
+let pubssubport = "tcp://127.0.0.1:"+commands[3].toString();
+let webserverport = commands[4];
 console.log("forum ports are", reqresport, "and puport",pubssubport)
 dm.StartReq(reqresport);
 
 // Subscriber
 var zmq = require("zeromq");
 subscriber = zmq.socket("sub");
-//let dmsubscribeport = "tcp://127.0.0.1:"+pubssubport+toString();
 subscriber.connect(pubssubport);
 subscriber.subscribe("forum message");
 console.log("Subscriber connected to port", pubssubport);
@@ -23,7 +23,7 @@ console.log("Subscriber connected to port", pubssubport);
 subscriber.on("message", function(topic, message) {
   //letting the message buffer, converting it to the
   //right format, adding timestamp and finally sending it
-  console.log("forum received message:", message)
+  console.log("forum received message:", message.toString())
   message = message.toString();
   message = JSON.parse(message)
   message = message.msg;
@@ -157,4 +157,4 @@ io.on('connection', function(sock) {
 });
 
 // Listen for connections !!
-http.listen (10000, on_startup);
+http.listen (webserverport, on_startup);

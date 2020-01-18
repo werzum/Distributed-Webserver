@@ -1,29 +1,11 @@
 var zmq = require("zeromq");
 var requester = zmq.socket("req")
 
-
-exports.Start = function (port) {
-	var dm_server = require("./dmserver.js");
-	dm_server.startDMserver(port);
-	console.log("start server at", port)
+exports.StartReq = function (port) {
+	console.log("COnnect to server at", port)
 	requester.connect(port);
 }
 
-/*
-exports.startServer = function (port) {
-	var dm_server = require("./dmserver.js")
-	for (var i = 0; i < arguments.length; i++) {
-    let port = arguments[i];
-		console.log("start server at", port, i, arguments.length)
-		requester.connect(port);
-
-	}
-}
-/*
-exports.StartClient = function (port) {
-	requester.connect(port);
-}
-*/
 var callbacks = {} // hash of callbacks. Key is invoId
 var invoCounter = 0; // current invocation number is key to access "callbacks".
 

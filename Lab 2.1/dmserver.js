@@ -40,7 +40,6 @@ responder.on('message', function(data) {
           reply.obj = dm.addPrivateMessage (invo.msg);
           break;
         case 'add public message':
-
           reply.obj = dm.addPublicMessage (invo.msg);
           console.log("reply:",reply, "invo", invo)
           publisher.send(["forum message", JSON.stringify(invo)]);

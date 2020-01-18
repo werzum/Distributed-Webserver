@@ -1,18 +1,40 @@
+
+//splitting the commands so that:
+//every first value is a reqAdresses,every second a publishAddress
+let commands = process.argv;
+commands = commands.slice(2)
+let reqAdresses = commands.filter(function(value, index, Arr) {
+    return index % 2 == 0;
+});
+let publishAddress = commands.filter(function(value, index, Arr) {
+    return (index+1) % 2 == 0;
+});
+
+reqAdresses.forEach((item, i) => {
+  runMultipleSevers(reqAdresses[i], publishAddress[i]);
+});
+
+function runMultipleSevers(reqAdresses, publishAddress){
+
 var zmq = require("zeromq");
 var responder = zmq.socket("rep")
 var dm = require ('./dm.js');
-var port = "tcp://127.0.0.1:5555"
-var publishport = "tcp://127.0.0.1:5557"
 var commands = process.argv;
+var reqresport = "tcp://127.0.0.1:"+reqAdresses;
+var publishport = "tcp://127.0.0.1:"+publishAddress;
 
-exports.startDMserver = function(port){
-  responder.bind(port, function(err){
-    if (err){console.log(err)}else{
-      console.log("DMserver listening on ", port)
-    }}
-  )
-}
+console.log("forum ports are", reqresport, "and puport",publishport)
 
+responder.bind(reqresport, function(err){
+  if (err){console.log(err)}else{
+    console.log("DMserver listening on ", reqresport)
+  }}
+)
+
+//for the pub/sub of public messages:
+var publisher = zmq.socket("pub");
+publisher.bindSync(publishport);
+console.log("Publisher bound to ",publishport);
 
 //regular message propagation
 responder.on('message', function(data) {
@@ -41,10 +63,10 @@ responder.on('message', function(data) {
           break;
         case 'add public message':
           reply.obj = dm.addPublicMessage (invo.msg);
-          //sending message to other DMservers
-          publisher.send(["checkpoint", JSON.stringify(invo)]);
+          console.log("publishing to everyone")
+          publisher.send(["forum message", JSON.stringify(invo)]);
           console.log("sending back to our own webserver")
-          responder.send (JSON.stringify(reply));
+          //responder.send (JSON.stringify(reply));
           break;
         case 'add subject':
           reply.obj = dm.addSubject (invo.sbj);
@@ -66,7 +88,7 @@ responder.on('message', function(data) {
   }
 )
 
-
+/*
 exports.startPubSubServers = function(port, addressList, index){
 
   subscriber = zmq.socket("sub");
@@ -98,4 +120,5 @@ exports.startPubSubServers = function(port, addressList, index){
       responder.send (JSON.stringify(reply));
       console.log("and our current message list:", dm.getPublicMessageList("id0"), "on DMserver with port", port)
     });
+}*/
 }

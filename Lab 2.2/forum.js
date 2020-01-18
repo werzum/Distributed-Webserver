@@ -3,15 +3,36 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var dm = require ('./dm_remote.js');
-
+var commands = process.argv;
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-exports.dmserverport = 'tcp://127.0.0.1:5555';;
-dm.Start(this.dmserverport);
+let reqresport = "tcp://127.0.0.1:"+commands[2].toString();
+let pubssubport = "tcp://127.0.0.1:"+commands[3].toString();
+let webserverport = commands[4];
+console.log("forum ports are", reqresport, "and puport",pubssubport)
+dm.StartReq(reqresport);
 
 process.on('uncaughtException', function (err) {
     console.log(err);
+});
+
+// Subscriber
+var zmq = require("zeromq");
+subscriber = zmq.socket("sub");
+subscriber.connect(pubssubport);
+subscriber.subscribe("forum message");
+console.log("Subscriber connected to port", pubssubport);
+
+subscriber.on("message", function(topic, message) {
+  //letting the message buffer, converting it to the
+  //right format, adding timestamp and finally sending it
+  console.log("forum received message:", message.toString())
+  message = message.toString();
+  message = JSON.parse(message)
+  message = message.msg;
+  message.ts = new Date();
+  io.emit('message', JSON.stringify(message));
 });
 
 // called on connection
@@ -40,12 +61,12 @@ app.get('/:page', function(req, res){
 
 
 // Subscriber
-var dmserver = require("./dmserver.js")
-var zmq = require("zeromq");
+//var dmserver = require("./dmserver.js")
+//var zmq = require("zeromq");
 //let subscriber = zmq.socket("sub");
 //let dmsubscribeport = "tcp://127.0.0.1:5557";
 //console.log("Subscriber connected to port", dmsubscribeport);
-
+/*
 //enter addresses here which are passed to startPubSubServers
 let addressList = ['tcp://127.0.0.1:5557','tcp://127.0.0.1:5558','tcp://127.0.0.1:5559']
 //starting multiple instances of dmserver
@@ -60,8 +81,7 @@ for (var i = 0; i < addressList.length; i++) {
     spawnServer(string);
     dmserver.startPubSubServers(address, addressList, i);
 }
-
-console.log("setting up forum subscriver")
+*/
 /*subscriber.connect(dmsubscribeport);
 subscriber.subscribe("");
 subscriber.on("message", function(topic, message) {
@@ -84,24 +104,7 @@ subscriber.on("message", function(reply) {
     console.log('Received message: ', reply.toString());
 })
 */
-// Subscriber
-var zmq = require("zeromq");
-subscriber = zmq.socket("sub");
-let dmsubscribeport = 'tcp://127.0.0.1:5557';
-subscriber.connect(dmsubscribeport);
-subscriber.subscribe("forum message");
-console.log("Subscriber connected to port", dmsubscribeport);
 
-subscriber.on("message", function(topic, message) {
-  //letting the message buffer, converting it to the
-  //right format, adding timestamp and finally sending it
-  console.log("forum received message")
-  message = message.toString();
-  message = JSON.parse(message)
-  message = message.msg;
-  message.ts = new Date();
-  io.emit('message', JSON.stringify(message));
-});
 
 
 io.on('connection', function(sock) {
@@ -199,4 +202,4 @@ io.on('connection', function(sock) {
 });
 
 // Listen for connections !!
-http.listen (10000, on_startup);
+http.listen (webserverport, on_startup);
