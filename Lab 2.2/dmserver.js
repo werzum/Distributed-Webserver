@@ -1,6 +1,9 @@
 
 //splitting the commands so that:
 //every first value is a reqAdresses,every second a publishAddress
+//eg: node dmserver 5555 5556 5557 5558 5559 5560
+//starts three servers, listening to requests on 5555,5557 and 5559
+//and publish on 5556, 5558, 5560
 let commands = process.argv;
 commands = commands.slice(2)
 let reqAdresses = commands.filter(function(value, index, Arr) {
@@ -56,14 +59,18 @@ subscriber.on("message", function(topic, message) {
   //right format, adding timestamp and finally sending it
   //per responder to the Webserver
   console.log(publishport,"received a message")
+
   let invo = JSON.parse(message.toString());
   let reply = {what:invo.what, invoId:invo.invoId};
   reply.obj = dm.addPublicMessage (invo.msg);
-  console.log(invo)
-  //sending back to forum, not working somehow
   publisher.send(["forum message", JSON.stringify(invo)])
-  //responder.send (JSON.stringify(reply));
-  //console.log("and our current message list:", dm.getPublicMessageList("id0"), "on DMserver with port", port)
+  /*
+  if (publishport == "tcp://127.0.0.1:5558"){
+    setTimeout(function() {
+      publisher.send(["forum message", JSON.stringify(invo)])
+    }, 10000);} else {
+    publisher.send(["forum message", JSON.stringify(invo)])
+  }*/
 });
 
 //regular message propagation
