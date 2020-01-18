@@ -1,13 +1,14 @@
 var net = require('net');
 var dm = require ('./dm.js');
+var commands = process.argv;
 
-  /*if listening to dmclient activate the following:
+/*if listening to dmclient activate the following:
 var dmclient = require("./dmclient.js")
 let HOST = dmclient.HOST;
 let PORT = dmclient.PORT;
 */
 
-var forum = require('./forum.js');
+//var forum = require('./forum.js');
 
 // Create the server socket, on client connections, bind event handlers
 server = net.createServer(function(sock) {
@@ -71,10 +72,9 @@ server.on("connection", function (sock){
 
 
 //for control via dmclient:
-//server.listen(HOAR, PORT);
+//server.listen(HOST, PORT);
 
-
-server.listen(9000, function () {
+server.listen(commands[2], function () {
   var address = server.address();
   var port = address.port;
   var family = address.family;

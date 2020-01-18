@@ -41,8 +41,10 @@ responder.on('message', function(data) {
           break;
         case 'add public message':
           reply.obj = dm.addPublicMessage (invo.msg);
-          console.log(publisher)
-          publisher.send(["forum message", JSON.stringify(invo)]);
+          //sending message to other DMservers
+          publisher.send(["checkpoint", JSON.stringify(invo)]);
+          console.log("sending back to our own webserver")
+          responder.send (JSON.stringify(reply));
           break;
         case 'add subject':
           reply.obj = dm.addSubject (invo.sbj);
@@ -66,30 +68,34 @@ responder.on('message', function(data) {
 
 
 exports.startPubSubServers = function(port, addressList, index){
-  publisher = zmq.socket("pub");
+
   subscriber = zmq.socket("sub");
+  publisher = zmq.socket("pub");
   publisher.bindSync(port);
+  console.log("Publisher bound to ",port);
+
   //making a deepcopy of the list
   let tempList = JSON.parse(JSON.stringify(addressList));
-  tempList.splice(index, 1, "a")
 
-  //selecting all ports that have not been assigned
+  //selecting all other servers that have not been assigned and subscribe
+  tempList.splice(index, 1, "a")
   for (var i = 0; i < tempList.length; i++) {
     if (tempList[i]!=="a"){
     subscriber.connect(tempList[i]);
-    subscriber.subscribe("forum message")
     subscriber.subscribe("checkpoint")
 	 }
   }
+
   subscriber.on("message", function(topic, message) {
     //letting the message buffer, converting it to the
     //right format, adding timestamp and finally sending it
-    console.log("received a message")
-    /*message = message.toString();
-    message = JSON.parse(message)
-    message = message.msg;
-    message.ts = new Date();
-    io.emit('message', JSON.stringify(message));*/
+    //per responder to the Webserver
+      let invo = JSON.parse(message.toString());
+      let reply = {what:invo.what, invoId:invo.invoId};
+      reply.obj = dm.addPublicMessage (invo.msg);
+      //sending back to forum, not working somehow
+      publisher.send(["forum message", JSON.stringify(reply)])
+      responder.send (JSON.stringify(reply));
+      console.log("and our current message list:", dm.getPublicMessageList("id0"), "on DMserver with port", port)
     });
-    publisher.send(["forum message", "sdfsdf"]);
 }

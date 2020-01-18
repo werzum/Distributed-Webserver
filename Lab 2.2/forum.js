@@ -42,10 +42,8 @@ app.get('/:page', function(req, res){
 // Subscriber
 var dmserver = require("./dmserver.js")
 var zmq = require("zeromq");
-let subscriber = zmq.socket("sub");
-let dmsubscribeport = 'tcp://127.0.0.1:5557';
-subscriber.connect(dmsubscribeport);
-subscriber.subscribe("forum message");
+//let subscriber = zmq.socket("sub");
+//let dmsubscribeport = "tcp://127.0.0.1:5557";
 //console.log("Subscriber connected to port", dmsubscribeport);
 
 //enter addresses here which are passed to startPubSubServers
@@ -53,7 +51,6 @@ let addressList = ['tcp://127.0.0.1:5557','tcp://127.0.0.1:5558','tcp://127.0.0.
 //starting multiple instances of dmserver
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-
 for (var i = 0; i < addressList.length; i++) {
     let address = addressList[i]
     let string = 'node dmserver.js '+address.toString()
@@ -64,7 +61,36 @@ for (var i = 0; i < addressList.length; i++) {
     dmserver.startPubSubServers(address, addressList, i);
 }
 
+console.log("setting up forum subscriver")
+/*subscriber.connect(dmsubscribeport);
+subscriber.subscribe("");
+subscriber.on("message", function(topic, message) {
+  //letting the message buffer, converting it to the
+  //right format, adding timestamp and finally sending it
+  console.log("forum received message")
+  message = message.toString();
+  message = JSON.parse(message)
+  message = message.msg;
+  message.ts = new Date();
+  io.emit('message', JSON.stringify(message));
+});*/
+/*
+var zmq = require('zeromq')
+var subscriber = zmq.socket('sub')
+subscriber.connect("tcp://127.0.0.1:5559")
+subscriber.subscribe("")
 
+subscriber.on("message", function(reply) {
+    console.log('Received message: ', reply.toString());
+})
+*/
+// Subscriber
+var zmq = require("zeromq");
+subscriber = zmq.socket("sub");
+let dmsubscribeport = 'tcp://127.0.0.1:5557';
+subscriber.connect(dmsubscribeport);
+subscriber.subscribe("forum message");
+console.log("Subscriber connected to port", dmsubscribeport);
 
 subscriber.on("message", function(topic, message) {
   //letting the message buffer, converting it to the

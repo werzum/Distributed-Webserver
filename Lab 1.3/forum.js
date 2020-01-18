@@ -3,13 +3,13 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var dm = require ('./dm_remote.js');
-
+var commands = process.argv;
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
 
-exports.dmserverhost = "127.0.0.1";
-exports.dmserverport = 9000;
-dm.Start(this.dmserverhost, this.dmserverport);
+let dmserverhost = "127.0.0.1";
+let dmserverport = commands[2];
+dm.Start(dmserverhost, dmserverport);
 
 process.on('uncaughtException', function (err) {
     console.log(err);
