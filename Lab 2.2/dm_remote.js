@@ -1,6 +1,7 @@
 var zmq = require("zeromq");
 var requester = zmq.socket("req")
 
+
 exports.StartReq = function (port) {
 	console.log("COnnect to server at", port)
 	requester.connect(port);
@@ -23,6 +24,7 @@ requester.on ('message', function (data) {
 	strRounds.forEach((part, i) => {
 
 		var reply = JSON.parse (part);
+		console.log("callbacks:",callbacks)
 		switch (reply.what) {
 			// TODO complete list of commands
 			case 'get private message list':

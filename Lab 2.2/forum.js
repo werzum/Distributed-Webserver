@@ -27,9 +27,10 @@ console.log("Subscriber connected to port", pubssubport);
 subscriber.on("message", function(topic, message) {
   //letting the message buffer, converting it to the
   //right format, adding timestamp and finally sending it
-  console.log("forum received message:", message.toString())
+//  console.log("forum received message:", message.toString())
   message = message.toString();
   message = JSON.parse(message)
+  console.log("forum received parsed message:",message)
   message = message.msg;
   message.ts = new Date();
   io.emit('message', JSON.stringify(message));
@@ -124,6 +125,7 @@ io.on('connection', function(sock) {
 			});
 		} else {
 			dm.addPublicMessage (msg, function () {
+          console.log("messages should look like this:",JSON.stringify(msg))
 			     io.emit('message', JSON.stringify(msg));
 			});
 		}

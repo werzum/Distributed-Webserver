@@ -10,31 +10,61 @@ let publishAddress = commands.filter(function(value, index, Arr) {
     return (index+1) % 2 == 0;
 });
 
+//starting a new Server for the addresses
 reqAdresses.forEach((item, i) => {
-  runMultipleSevers(reqAdresses[i], publishAddress[i]);
+  runMultipleSevers(reqAdresses[i], publishAddress[i], publishAddress, i);
 });
 
-function runMultipleSevers(reqAdresses, publishAddress){
+function runMultipleSevers(reqAdresses, publishAddress, publishAddressArray, index){
 
+//importing everything we need
 var zmq = require("zeromq");
 var responder = zmq.socket("rep")
 var dm = require ('./dm.js');
 var commands = process.argv;
 var reqresport = "tcp://127.0.0.1:"+reqAdresses;
 var publishport = "tcp://127.0.0.1:"+publishAddress;
-
-console.log("forum ports are", reqresport, "and puport",publishport)
-
 responder.bind(reqresport, function(err){
   if (err){console.log(err)}else{
     console.log("DMserver listening on ", reqresport)
   }}
 )
 
+console.log("forum ports are", reqresport, "and puport",publishport)
+
 //for the pub/sub of public messages:
 var publisher = zmq.socket("pub");
 publisher.bindSync(publishport);
 console.log("Publisher bound to ",publishport);
+
+//Subscribing to all other addresses
+subscriber = zmq.socket("sub");
+//selecting all other servers that have not been assigned and subscribe
+//making a deepcopy of the list
+let tempList = JSON.parse(JSON.stringify(publishAddressArray));
+tempList.splice(index, 1, "a")
+for (var i = 0; i < tempList.length; i++) {
+  if (tempList[i]!=="a"){
+  subscriber.connect("tcp://127.0.0.1:"+tempList[i]);
+  subscriber.subscribe("checkpoint")
+  console.log(publishport," subscribed to ", tempList[i])
+ }
+}
+
+subscriber.on("message", function(topic, message) {
+  //letting the message buffer, converting it to the
+  //right format, adding timestamp and finally sending it
+  //per responder to the Webserver
+  console.log(publishport,"received a message")
+  let invo = JSON.parse(message.toString());
+  let reply = {what:invo.what, invoId:invo.invoId};
+  reply.obj = dm.addPublicMessage (invo.msg);
+  console.log(invo)
+  //sending back to forum, not working somehow
+  publisher.send(["forum message", JSON.stringify(invo)])
+  //responder.send (JSON.stringify(reply));
+  //console.log("and our current message list:", dm.getPublicMessageList("id0"), "on DMserver with port", port)
+});
 
 //regular message propagation
 responder.on('message', function(data) {
@@ -64,8 +94,8 @@ responder.on('message', function(data) {
         case 'add public message':
           reply.obj = dm.addPublicMessage (invo.msg);
           console.log("publishing to everyone")
-          publisher.send(["forum message", JSON.stringify(invo)]);
-          console.log("sending back to our own webserver")
+          publisher.send(["checkpoint", JSON.stringify(invo)]);
+          //console.log("sending back to our own webserver")
           //responder.send (JSON.stringify(reply));
           break;
         case 'add subject':
